@@ -1,0 +1,51 @@
+id = "e4mc"
+kind = "native-mod"
+name = "e4mc"
+summary = "Share your LAN world over the e4mc relay, so friends can join without port forwarding."
+description = """
+An **unofficial** port of [e4mc](https://github.com/vgskye/e4mc-minecraft-architectury) by vgskye and
+contributors to Horizon, as a native mod. It is not made or endorsed by the e4mc project.
+
+In single player, type `/e4mc start`. The mod opens the world to the LAN and asks the e4mc relay for a
+public domain, which it prints in chat (click to copy). Friends paste that into **Multiplayer > Direct
+Connection** in a plain Minecraft 26.3 client; nothing is needed on their side.
+
+- **Offline mode while hosting.** Horizon authenticates every LAN guest with Mojang whenever the host
+  plays on a Microsoft account, so a friend without one cannot join. With this on, the game plays as if
+  no account were signed in while a world is hosted, and anyone can join. It affects hosting only:
+  joining an online-mode server from the title screen still uses your account.
+- **In game settings.** e4mc has its own row in Options > Mods, with a page for the relay, offline mode
+  and the chat announcement; switches apply and save as you click.
+- **Works with the LAN you open yourself** (Esc > Open to LAN) as well: the mod notices and publishes an
+  address for it.
+- **A self-hosted relay works too.** `relay_host` in `config/e4mc.json` points the mod at your own
+  [e4mc-quiclime](https://github.com/vgskye/e4mc-quiclime) instead of the public one.
+
+Commands: `/e4mc`, `/e4mc status`, `/e4mc start`, `/e4mc stop`, `/e4mc domain`.
+
+**The relay is a free service run by the e4mc project, not by this mod's author, and has no SLA.** It sees
+the game traffic in the clear, as any relay-terminated tunnel does; self-host e4mc-quiclime if that
+matters to you. If e4mc changes its protocol, this mod breaks until it is updated.
+
+Requires Horizon `nightly-2026-11-07` or newer: the relay client uses `quinn`, and that is the first
+official build whose `Cargo.lock` carries it. The mod declares the hook-points version it needs rather
+than pinning a commit, so later Nightlies and releases keep working without a new download.
+
+e4mc is MIT, by vgskye and contributors; the relay protocol follows e4mc-quiclime (MIT OR Apache-2.0).
+See the NOTICE in the source."""
+authors = ["hittake"]
+owners = ["luongminhduc-hittake"]
+owner_ids = [87972741]
+license = "MIT"
+source = "https://github.com/luongminhduc-hittake/e4mc-horizon"
+icon = "icons/e4mc.png"
+categories = ["utility", "social", "management"]
+tags = ["e4mc", "multiplayer", "lan", "tunnel", "relay", "port-forwarding", "offline-mode", "port"]
+
+[[versions]]
+version = "0.1.0"
+published = "2026-11-08"
+game = "26.3"
+file = "e4mc-0.1.0.hnmod"
+sha256 = "7ffd934bd7377c4ad27dc9435e30de4789856c3f7538a818cbdd2c54dd3371cc"
+changelog = "First release: `/e4mc start` opens the LAN and publishes an e4mc address; offline mode while hosting, so friends without an account can join; an Options > Mods row with its own settings page."
