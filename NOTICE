@@ -1,0 +1,32 @@
+e4mc for Horizon — an unofficial port
+=====================================
+
+This mod is an UNOFFICIAL port of e4mc to Horizon. It is not made, reviewed,
+endorsed or supported by the e4mc project or its authors. Do not report its bugs
+to them.
+
+e4mc is a Minecraft mod by vgskye and contributors. This project reimplements,
+in Rust for Horizon, what e4mc does for Fabric/NeoForge: ask a relay for a public
+domain and forward the players who join it to the local LAN server. No Java code
+from e4mc is included here; the game-side code is written against Horizon's own
+native hook API, and the relay client is written against the relay's wire
+protocol.
+
+Upstream projects this work follows and credits:
+
+  e4mc (Minecraft mod, MIT)
+    https://github.com/vgskye/e4mc-minecraft-architectury
+    https://modrinth.com/mod/e4mc
+
+  e4mc-quiclime (the relay server, MIT OR Apache-2.0)
+    https://github.com/vgskye/e4mc-quiclime
+
+  e4all (a fork of e4mc with an offline-mode option, MIT)
+    https://github.com/Synquox/e4all
+
+The relay this mod talks to is run by the e4mc project at e4mc.link. This mod
+ships no relay of its own and speaks to no service operated by its author. That
+free service has no SLA; `relay_host` in the config points the mod at a
+self-hosted e4mc-quiclime instead.
+
+No code from Horizon itself is included here.

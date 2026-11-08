@@ -1,0 +1,21 @@
+[package]
+name = "e4mc_bridge"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "e4mc's relay session for Horizon: broker, QUIC control channel and the stream-to-TCP bridge."
+
+[dependencies]
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", default-features = false, features = ["rt", "rt-multi-thread", "net", "time", "io-util", "sync"] }
+# The broker is one plain HTTPS GET; ureq is in Horizon's lock (as the game's own).
+ureq = { version = "2", default-features = false, features = ["tls"] }
+log = "0.4"
+
+# No `macros` feature: `tokio-macros` is not in Horizon's lock, and a mod may
+# only name crates the lock already has. The runtime is built by hand.

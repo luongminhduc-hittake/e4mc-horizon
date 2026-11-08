@@ -1,0 +1,9 @@
+{
+ "schema": 1,
+ "id": "e4mc",
+ "version": "0.1.0",
+ "game": "26.3",
+ "horizon": "2ebf00a0281c592f79191e76fce0e7d522c6f425",
+ "mixins": "5a64af938ec86b00d53d16a408aabc0038fb3e57",
+ "hooks": 26
+}

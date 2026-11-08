@@ -1,0 +1,132 @@
+[mod]
+id = "e4mc"
+version = "0.1.0"
+priority = 100
+
+# Built and tested on this Horizon: the first one whose Cargo.lock has quinn.
+[compatibility]
+horizon_revision = "2ebf00a0281c592f79191e76fce0e7d522c6f425"
+
+# The relay session: broker, QUIC control channel, the stream-to-TCP bridge.
+# Plain Rust with its tests, none of it names a game type.
+[[crate]]
+id = "bridge"
+path = "bridge"
+
+# The session's life inside the game: config, start/stop, chat, `/e4mc`.
+[[module]]
+id = "glue"
+file = "crates/horizon-client/src/game.rs"
+name = "e4mc"
+source = "glue.rs"
+
+# The flag `auth::current` reads. It lives beside `auth`, in the render crate,
+# because a module of the game crate is not visible from there.
+# `pub`, not the default `pub(crate)`: `auth` lives in the render crate and the
+# game crate is the one that sets the flag, so a crate-private module is not
+# reachable from there.
+[[module]]
+id = "auth_suppress"
+file = "crates/horizon-client-render/src/auth.rs"
+name = "auth_suppress"
+visibility = "pub"
+source = "auth_flag.rs"
+
+# Force the LAN into offline mode while a world is hosted, so friends without
+# an account can join. `auth::current()` answers the account, and
+# `OnlineMode::lan()` stays offline exactly when it answers nothing; its own
+# body is `CURRENT.get().cloned()`, which a RETURN may rewrite.
+[[injection]]
+id = "offline"
+kind = "RETURN"
+target = "horizon_client_render::auth::current"
+helper = "offline.rs"
+bindings = [
+  { name = "value", ty = "Option<Arc<AuthSession>>", value = "$value" },
+]
+
+# Before the server loads its worlds: set the offline flag, because
+# `integrated_open` reads the LAN's online mode long before the first tick.
+[[injection]]
+id = "hosted"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_server_about_to_start"
+helper = "hosted.rs"
+bindings = [
+  { name = "dedicated", ty = "bool", value = "dedicated" },
+]
+
+# Options > Mods: e4mc's own row, and the page its button opens.
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list.rs"
+bindings = [
+  { name = "mods", ty = "&mut Vec<crate::game::native_hooks::NativeMod>", value = "&mut *mods" },
+]
+
+[[injection]]
+id = "settings"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings"
+helper = "settings.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "buttons", ty = "&mut Vec<String>", value = "&mut *buttons" },
+]
+
+[[injection]]
+id = "click"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_settings_click"
+helper = "settings_click.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "mod_id", ty = "&str", value = "mod_id" },
+  { name = "button", ty = "usize", value = "button" },
+]
+
+# Every tick: follow the LAN port, and stop the relay when LAN closes.
+[[injection]]
+id = "tick"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_server_tick"
+helper = "tick.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "phase", ty = "crate::game::native_lifecycle::ServerTickPhase", value = "phase" },
+]
+
+# The world closing: the relay closes its connection.
+[[injection]]
+id = "lifecycle"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_world_lifecycle"
+helper = "lifecycle.rs"
+bindings = [
+  { name = "phase", ty = "crate::game::native_lifecycle::WorldPhase", value = "phase" },
+]
+
+# `/e4mc ...` in every player's command tree, and its handler.
+[[injection]]
+id = "register"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_register_commands"
+helper = "register.rs"
+bindings = [
+  { name = "commands", ty = "&mut Vec<crate::game::native_server::NativeCommand>", value = "&mut *commands" },
+]
+
+[[injection]]
+id = "command"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_perform_command"
+helper = "command.rs"
+bindings = [
+  { name = "game", ty = "&mut crate::game::Game<'_>", value = "&mut *self" },
+  { name = "player", ty = "&crate::game::native_server::NativeServerPlayer", value = "player" },
+  { name = "command", ty = "&str", value = "command" },
+  { name = "ran", ty = "&mut bool", value = "&mut *ran" },
+]
