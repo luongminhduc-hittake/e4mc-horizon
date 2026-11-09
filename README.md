@@ -9,7 +9,8 @@
 Open your Horizon LAN world to friends anywhere, **without port forwarding**. The
 mod asks the e4mc relay for a public domain, you send that domain to your friends,
 and they join from a plain Minecraft client — including friends on **offline
-accounts** with no Microsoft login.
+accounts** with no Microsoft login, if you switch that on (it is off by default,
+see [Config](#config)).
 
 e4mc itself is by [vgskye and contributors](https://github.com/vgskye/e4mc-minecraft-architectury)
 (MIT); the relay protocol follows [e4mc-quiclime](https://github.com/vgskye/e4mc-quiclime)
@@ -49,13 +50,14 @@ e4mc has its own row in **Options > Mods** like any other mod, with a **Settings
 button next to it. Its page has three switches, applied and saved as you click:
 
 - **Open to the relay when the LAN opens** (`enabled`)
-- **Offline mode while hosting (no Mojang login)** (`force_offline`)
+- **No Mojang login while hosting (for friends without an account)** (`force_offline`)
 - **Announce the address in chat** (`announce_in_chat`)
 
-The offline switch takes effect at once, even mid-session: turn it on while hosting
-and the next guest joins without a Mojang login. Turning the whole row **off** stops
-the mod starting a session; the config file below is the same setting, for edits
-outside the game.
+Flipping a switch writes `config/e4mc.json` at once; **the offline one takes effect the
+next time a world opens**, because Horizon fixes a LAN's online mode while the world
+loads and never re-reads it. Close the world and open it again to change it. Turning
+the whole row **off** stops the mod starting a session; the config file below is the
+same settings, for edits outside the game.
 
 | Command | What it does |
 | --- | --- |
@@ -71,7 +73,7 @@ outside the game.
 ```json
 {
   "enabled": true,
-  "force_offline": true,
+  "force_offline": false,
   "use_broker": true,
   "broker_url": "https://broker.e4mc.link/getBestRelay",
   "relay_host": "test.e4mc.link",
@@ -80,14 +82,15 @@ outside the game.
 }
 ```
 
-**`force_offline`** is the one that matters. Horizon authenticates every LAN guest
+**`force_offline`** is the one to think about. Horizon authenticates every LAN guest
 with Mojang whenever the host plays on a Microsoft account, and a friend without an
-account cannot answer that. With this on, the game plays as if no account were
-signed in **while a world is hosted**, so the LAN runs in offline mode and anyone
-can join. Joining an online-mode server from the title screen still uses your
-account; only hosting is affected. It is **on by default** because it is the whole
-point for the people this mod is for — set it to `false` if everyone you play with
-owns the game and you want Mojang to authenticate them.
+account cannot answer that. With this on, and only while e4mc is on, the game plays
+as if no account were signed in **while a world is hosted**, so the LAN runs in
+offline mode and anyone can join. Joining an online-mode server from the title
+screen still uses your account; only hosting is affected. It is **off by default**:
+an ordinary LAN keeps authenticating its guests, and turning this on is a choice you
+make for the worlds you share. Set it to `true` if you play with people who do not
+own the game.
 
 `use_broker` asks e4mc for the nearest relay; turn it off to use `relay_host` (for a
 self-hosted [e4mc-quiclime](https://github.com/vgskye/e4mc-quiclime)).
@@ -109,12 +112,12 @@ e4mc/
   horizon-mixin.toml   the bundle: injections, modules, the bridge crate
   horizon-native.json  the release manifest (mod id, version, hook points)
   glue.rs              game::e4mc — config, start/stop, chat, the /e4mc command
-  offline.rs           RETURN hook on auth::current: the LAN runs offline while hosting
+  offline.rs           RETURN hook on auth::current: hidden account, while hosting offline
   auth_flag.rs         auth::auth_suppress — the flag that hook reads
-  hosted.rs            server_about_to_start: sets that flag before the LAN's mode is decided
+  hosted.rs            server_about_to_start: sets that flag, if e4mc is on, before the LAN's mode
   list.rs              the Options > Mods row
   settings.rs          the settings page's buttons
-  settings_click.rs    a click on them: save and apply
+  settings_click.rs    a click on them: save (the next world applies it)
   tick.rs              every tick: follow the LAN port, open/close to match
   lifecycle.rs         the world closing: end the session, show the account again
   register.rs          the /e4mc command tree
@@ -144,7 +147,8 @@ Verified on Linux:
   and the guest on an offline client: the guest logged in and joined.
 - The offline override, with a real login handshake against a hosted LAN: the server
   answers compression then `Login Finished` (0x02), never an `Encryption Request`
-  (0x01).
+  (0x01). With `force_offline` off (the default) that same LAN does send an
+  `Encryption Request` and authenticates its guests.
 
 Not verified yet:
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.1.1 — 2026-11-09
+
+Fixes from the registry review of 0.1.0: offline hosting was on by default, and it
+applied to worlds this mod had nothing to do with.
+
+- **`force_offline` now defaults to `false`.** A LAN world authenticates its guests
+  as it always did; turning offline hosting on is a choice, made for the worlds you
+  actually share.
+- **It only applies when e4mc is on.** `server_about_to_start` checks `enabled`, so a
+  world opened with the mod switched off is an ordinary authenticated world. Before,
+  the switch's position was ignored and the account was hidden anyway.
+- **The settings page says when a switch lands.** Horizon fixes a LAN's online mode
+  while the world loads and never re-reads it, so the offline switch applies to the
+  next world, not the one already open. The README said the opposite and has been
+  corrected.
+- The settings label reads *No Mojang login while hosting (for friends without an
+  account)*, which says what it does rather than naming the mechanism.
+
+No change to the relay, the command, or the config format.
+
+Verified on Linux, Horizon `nightly-2026-11-07`:
+
+- With `force_offline` off, a hosted LAN answers a real login with an `Encryption
+  Request` (0x01) and authenticates the guest: the account is not hidden.
+- With it on, the same handshake gets `Login Finished` (0x02) and never an
+  `Encryption Request`.
+- With `enabled` off, opening a world leaves `auth::current()` answering the account,
+  whether or not `force_offline` is on.
+- The settings page toggles the three switches and writes `config/e4mc.json`.
+
+Not verified: Windows and macOS, more than two players, and sessions longer than a
+few minutes.
+
 ## 0.1.0 — 2026-11-08
 
 First release.

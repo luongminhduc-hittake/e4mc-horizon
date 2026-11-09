@@ -13,8 +13,7 @@ use crate::game::lan::LanSettings;
 use crate::text::Text;
 use e4mc_bridge::broker::Broker;
 use e4mc_bridge::session::{Session, SessionState};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 /// What the mod reads once and keeps.
@@ -23,8 +22,11 @@ use std::time::Duration;
 pub struct Config {
     /// Open the relay whenever the world is published to the LAN.
     pub enabled: bool,
-    /// Force the LAN into offline mode while this world is hosted, so friends
-    /// without an account can join even when this computer plays on one.
+    /// Let friends without an account join: the LAN runs without Mojang
+    /// authentication while this world is open, even when this computer plays
+    /// on one. **Off by default** and only ever while `enabled` is on: an
+    /// ordinary LAN host keeps authenticating its guests as it always did.
+    /// Decided when the world opens, not while it runs.
     pub force_offline: bool,
     /// Ask e4mc's broker for the nearest relay instead of the fixed one.
     pub use_broker: bool,
@@ -39,7 +41,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             enabled: true,
-            force_offline: true,
+            force_offline: false,
             use_broker: true,
             broker_url: "https://broker.e4mc.link/getBestRelay".into(),
             relay_host: "test.e4mc.link".into(),
@@ -63,7 +65,7 @@ impl Config {
 const FILE: &str = "e4mc.json";
 
 /// The version the game and the release both report.
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "0.1.1";
 
 /// The config, read once and then kept here: the settings page changes it at
 /// run time, so it cannot be a `OnceLock` of `&'static`.
@@ -129,47 +131,31 @@ pub fn mine(mod_id: &str) -> bool {
     mod_id == "e4mc"
 }
 
-/// Puts `force_offline` into effect right now, when a world is being hosted.
-/// Off a hosted world the flag stays clear, so joining an online-mode server
-/// from the title screen still uses the account.
-pub fn apply_offline(force: bool) {
-    if hosting() {
-        crate::auth::auth_suppress::set_suppress(force);
-    }
-}
-
-/// Whether a world is being hosted right now: the offline override applies
-/// only then, so joining an online-mode server still uses the account.
-static HOSTING: AtomicBool = AtomicBool::new(false);
-
-pub fn set_hosting(hosting: bool) {
-    HOSTING.store(hosting, Ordering::Relaxed);
-}
-
-pub fn hosting() -> bool {
-    HOSTING.load(Ordering::Relaxed)
+/// Whether this mod should act at all: the relay runs, and it may suppress
+/// authentication for the world about to open.
+pub fn wanted() -> bool {
+    config().enabled
 }
 
 /// Starts hosting: the LAN's online mode is decided while the world opens, long
 /// before the first tick, so the flag has to be set here, from the
 /// `server_about_to_start` hook that runs just before it.
 ///
-/// Both flags say the same thing and both must move together:
-/// `auth::auth_suppress` is what `auth::current()` reads (it lives in the
-/// render crate, where `auth` is), and `HOSTING` is this module's own record.
+/// Setting it later than this has no effect on the LAN: `OnlineMode::lan()` has
+/// already read `auth::current()`, and the `NetConfig` it built is what every
+/// login goes through. So the switch in the settings page decides the **next**
+/// world, not this one.
 pub fn begin_hosting() {
     let force = config().force_offline;
     if force {
         log::info!("e4mc: the LAN runs in offline mode (config/e4mc.json, force_offline)");
     }
-    set_hosting(true);
     crate::auth::auth_suppress::set_suppress(force);
 }
 
 /// Stops hosting: the account is visible again, so joining an online-mode
 /// server from the title screen works as usual.
 pub fn end_hosting() {
-    set_hosting(false);
     crate::auth::auth_suppress::set_suppress(false);
 }
 

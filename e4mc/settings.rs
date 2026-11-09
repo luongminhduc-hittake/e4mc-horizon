@@ -1,4 +1,4 @@
-// e4mc's settings page: the two switches that matter.
+// e4mc's settings page: the switches that matter.
 //
 // Labels are rebuilt each time the page opens, so they always show the values
 // in the file rather than what the player last clicked.
@@ -13,7 +13,7 @@ fn e4mc_page(game: &mut crate::game::Game<'_>, mod_id: &str, buttons: &mut Vec<S
         crate::game::e4mc::on_off(config.enabled)
     ));
     buttons.push(format!(
-        "Offline mode while hosting (no Mojang login): {}",
+        "No Mojang login while hosting (for friends without an account): {}",
         crate::game::e4mc::on_off(config.force_offline)
     ));
     buttons.push(format!(

@@ -10,12 +10,17 @@ In single player, type `/e4mc start`. The mod opens the world to the LAN and ask
 public domain, which it prints in chat (click to copy). Friends paste that into **Multiplayer > Direct
 Connection** in a plain Minecraft 26.3 client; nothing is needed on their side.
 
-- **Offline mode while hosting.** Horizon authenticates every LAN guest with Mojang whenever the host
-  plays on a Microsoft account, so a friend without one cannot join. With this on, the game plays as if
-  no account were signed in while a world is hosted, and anyone can join. It affects hosting only:
-  joining an online-mode server from the title screen still uses your account.
-- **In game settings.** e4mc has its own row in Options > Mods, with a page for the relay, offline mode
-  and the chat announcement; switches apply and save as you click.
+- **Offline hosting is opt-in.** Horizon authenticates every LAN guest with Mojang whenever the host plays
+  on a Microsoft account, so a friend without one cannot join. Turn `force_offline` on (Options > Mods >
+  e4mc > Settings) and, for the worlds you open from then on, the game plays as if no account were signed
+  in, so anyone can join. **It is off by default**: an ordinary LAN keeps authenticating its guests. It only
+  applies while e4mc itself is on, and only to hosting — joining an online-mode server from the title
+  screen still uses your account.
+- **Decided when a world opens.** Horizon fixes a LAN's online mode while the world loads and never
+  re-reads it, so a switch flipped mid-session changes the file and the next world, not the one already
+  open.
+- **In game settings.** e4mc has its own row in Options > Mods, with a page for the relay, offline hosting
+  and the chat announcement; switches save as you click.
 - **Works with the LAN you open yourself** (Esc > Open to LAN) as well: the mod notices and publishes an
   address for it.
 - **A self-hosted relay works too.** `relay_host` in `config/e4mc.json` points the mod at your own
@@ -39,8 +44,16 @@ owner_ids = [87972741]
 license = "MIT"
 source = "https://github.com/luongminhduc-hittake/e4mc-horizon"
 icon = "icons/e4mc.png"
-categories = ["utility", "social", "management"]
+categories = ["utility", "social"]
 tags = ["e4mc", "multiplayer", "lan", "tunnel", "relay", "port-forwarding", "offline-mode", "port"]
+
+[[versions]]
+version = "0.1.1"
+published = "2026-11-09"
+game = "26.3"
+file = "e4mc-0.1.1.hnmod"
+sha256 = "ba59ca4d733ba8862fe66861214a6da2ca59f98fd8d07d163500e33987b38b61"
+changelog = "Offline hosting is now opt-in and scoped: it defaults to off, and it is only applied to worlds opened while e4mc is on, so an ordinary LAN keeps authenticating its guests. The settings page and README now say that the switch takes effect when a world opens, not mid-session."
 
 [[versions]]
 version = "0.1.0"
