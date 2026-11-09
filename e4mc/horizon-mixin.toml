@@ -1,6 +1,6 @@
 [mod]
 id = "e4mc"
-version = "0.1.1"
+version = "0.1.2"
 priority = 100
 
 # Built and tested on this Horizon: the first one whose Cargo.lock has quinn.

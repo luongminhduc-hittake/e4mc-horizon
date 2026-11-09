@@ -5,14 +5,16 @@
 // relay gives a domain as soon as it is asked, so a session started before the
 // LAN opens would hand out an address nothing answers.
 //
-// `/e4mc start` opens the LAN too (port `available_port()`, the game's own
-// choice), so "start the mod" and "share the world" are one action.
+// Two things ask for a session and both are honoured: the LAN opening on its own
+// (Open to LAN, or `enabled` on), and `/e4mc start`. `/e4mc stop` closes it for
+// as long as the LAN stays open; closing and reopening the LAN publishes again.
 
 use crate::game::Game;
 use crate::game::lan::LanSettings;
 use crate::text::Text;
 use e4mc_bridge::broker::Broker;
 use e4mc_bridge::session::{Session, SessionState};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -65,7 +67,7 @@ impl Config {
 const FILE: &str = "e4mc.json";
 
 /// The version the game and the release both report.
-pub const VERSION: &str = "0.1.1";
+pub const VERSION: &str = "0.1.2";
 
 /// The config, read once and then kept here: the settings page changes it at
 /// run time, so it cannot be a `OnceLock` of `&'static`.
@@ -165,6 +167,10 @@ static SESSION: Mutex<Option<Session>> = Mutex::new(None);
 static PORT: Mutex<Option<u16>> = Mutex::new(None);
 /// The last domain told to chat, so it is said once.
 static ANNOUNCED: Mutex<Option<String>> = Mutex::new(None);
+/// Set by `/e4mc stop`: the player closed the address while the LAN stays open,
+/// so the tick must not dial the relay again until they ask (`/e4mc start`) or
+/// the LAN is closed and opened once more.
+static CLOSED: AtomicBool = AtomicBool::new(false);
 
 /// The port supplier handed to the session: it reads the shared cell, so a LAN
 /// port that appears after the session started is picked up.
@@ -188,6 +194,7 @@ fn running() -> bool {
 /// `Err` when the LAN can't open or the relay refuses.
 pub fn start(game: &mut Game<'_>) -> Result<String, String> {
     let config = config();
+    CLOSED.store(false, Ordering::Relaxed);
     if game.lan_port().is_none() {
         open_lan(game)?;
     }
@@ -248,6 +255,13 @@ pub fn stop() {
     *ANNOUNCED.lock().unwrap_or_else(|e| e.into_inner()) = None;
 }
 
+/// `/e4mc stop`: closes the address and keeps it closed, so the tick does not
+/// dial the relay again for the LAN that is still open.
+pub fn stop_and_hold() {
+    CLOSED.store(true, Ordering::Relaxed);
+    stop();
+}
+
 pub fn status() -> (Config, SessionState) {
     let state = SESSION
         .lock()
@@ -275,13 +289,18 @@ pub fn tick(game: &mut Game<'_>) {
     let running = running();
     let config = config();
 
+    // The player closed the address (`/e4mc stop`) but the LAN is still open:
+    // leave it closed. Closing the LAN clears this, so opening it again publishes.
+    if shared.is_none() {
+        CLOSED.store(false, Ordering::Relaxed);
+    }
     // The world stopped being shared (or the mod was switched off): close.
     if running && (shared.is_none() || !config.enabled) {
         stop();
         return;
     }
     // The world is shared and the relay isn't up: dial it, without waiting.
-    if !running && shared.is_some() && config.enabled {
+    if !running && shared.is_some() && config.enabled && !CLOSED.load(Ordering::Relaxed) {
         let mut slot = SESSION.lock().unwrap_or_else(|e| e.into_inner());
         if slot.is_none() {
             slot.replace(Session::start(config.broker(), port_source()));
@@ -330,10 +349,12 @@ pub fn command(game: &mut Game<'_>, player: u128, words: &[&str]) -> bool {
             ),
             SessionState::Starting => "e4mc: asking the relay for an address…".to_string(),
             SessionState::Stopped => {
-                if config.enabled {
-                    "e4mc: closed. /e4mc start opens the LAN and gets an address.".to_string()
-                } else {
+                if !config.enabled {
                     "e4mc: turned off in config/e4mc.json".to_string()
+                } else if CLOSED.load(Ordering::Relaxed) {
+                    "e4mc: closed. /e4mc start gets an address again.".to_string()
+                } else {
+                    "e4mc: closed. /e4mc start opens the LAN and gets an address.".to_string()
                 }
             }
         },
@@ -342,7 +363,7 @@ pub fn command(game: &mut Game<'_>, player: u128, words: &[&str]) -> bool {
             Err(e) => e,
         },
         Some("stop") => {
-            stop();
+            stop_and_hold();
             "e4mc: address closed (the LAN stays open).".to_string()
         }
         Some("domain") => match domain() {

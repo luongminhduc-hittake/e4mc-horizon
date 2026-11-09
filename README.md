@@ -39,7 +39,7 @@ keeps building on later Nightlies and releases without a new download.
 2. Type `/e4mc start`. The mod opens the LAN itself and asks the relay for an address.
 3. Chat shows `e4mc: open — word-word.eu.e4mc.link` — click to copy.
 4. Send it to your friends; they paste it into **Multiplayer → Direct Connection**.
-5. `/e4mc stop` closes the address. Closing the world closes it too.
+5. `/e4mc stop` closes the address and keeps it closed. Closing the world closes it too.
 
 Opening the LAN by hand (Esc → Open to LAN) works the same: the mod notices and
 publishes an address for it.
@@ -63,7 +63,7 @@ same settings, for edits outside the game.
 | --- | --- |
 | `/e4mc` / `/e4mc status` | whether it is open, the address, the LAN port |
 | `/e4mc start` | open the LAN if needed, then get an address |
-| `/e4mc stop` | close the address (the LAN stays open) |
+| `/e4mc stop` | close the address and keep it closed (the LAN stays open) |
 | `/e4mc domain` | print the address |
 
 ## Config
@@ -145,10 +145,13 @@ Verified on Linux:
   server.
 - **Two machines playing** through the relay with the host on a **Microsoft account**
   and the guest on an offline client: the guest logged in and joined.
-- The offline override, with a real login handshake against a hosted LAN: the server
-  answers compression then `Login Finished` (0x02), never an `Encryption Request`
-  (0x01). With `force_offline` off (the default) that same LAN does send an
-  `Encryption Request` and authenticates its guests.
+- The offline setting, with a real login handshake against a hosted LAN, in all four
+  combinations — `force_offline` off (the default), on, and `enabled` off with
+  `force_offline` on. Only the second answers `Login Finished` (0x02) instead of an
+  `Encryption Request` (0x01); the other two authenticate their guests.
+- `/e4mc start`, `/e4mc stop` and `/e4mc status` driven from inside a running world:
+  stop closes the address and it stays closed across ticks with the LAN still open,
+  start publishes again, and the LAN `/e4mc start` opens is the one the relay bridges.
 
 Not verified yet:
 

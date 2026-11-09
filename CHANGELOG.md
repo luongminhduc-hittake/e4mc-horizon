@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.2 — 2026-11-09
+
+- **`/e4mc stop` now keeps the address closed.** Before, the next server tick saw a
+  LAN still open and dialled the relay again, so the address came back a moment
+  later with a new domain and the command did nothing. It stays closed until
+  `/e4mc start`, or until the LAN is closed and opened again.
+- `/e4mc status` tells the two states apart ("closed" vs "turned off in
+  config/e4mc.json").
+
+Verified on Linux, Horizon `nightly-2026-11-07`: `/e4mc start` publishes and opens
+the LAN in offline mode when `force_offline` is on; `/e4mc stop` closes it and it
+stays closed across ticks with the LAN still open; Open to LAN on a world with
+`force_offline` off answers an `Encryption Request`.
+
 ## 0.1.1 — 2026-11-09
 
 Fixes from the registry review of 0.1.0: offline hosting was on by default, and it

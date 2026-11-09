@@ -48,17 +48,10 @@ categories = ["utility", "social"]
 tags = ["e4mc", "multiplayer", "lan", "tunnel", "relay", "port-forwarding", "offline-mode", "port"]
 
 [[versions]]
-version = "0.1.1"
+version = "0.1.2"
 published = "2026-11-09"
 game = "26.3"
-file = "e4mc-0.1.1.hnmod"
-sha256 = "ba59ca4d733ba8862fe66861214a6da2ca59f98fd8d07d163500e33987b38b61"
-changelog = "Offline hosting is now opt-in and scoped: it defaults to off, and it is only applied to worlds opened while e4mc is on, so an ordinary LAN keeps authenticating its guests. The settings page and README now say that the switch takes effect when a world opens, not mid-session."
+file = "e4mc-0.1.2.hnmod"
+sha256 = "b39ce463e7591ef3caa0dea45990a36a7deaccc567f9128eaa1060bf9e937a0f"
+changelog = "`/e4mc stop` now keeps the address closed instead of the next tick dialling the relay again. Offline hosting is opt-in and scoped: it defaults to off, and it is only applied to worlds opened while e4mc is on, so an ordinary LAN keeps authenticating its guests. The settings page and README now say that the switch takes effect when a world opens, not mid-session."
 
-[[versions]]
-version = "0.1.0"
-published = "2026-11-08"
-game = "26.3"
-file = "e4mc-0.1.0.hnmod"
-sha256 = "7ffd934bd7377c4ad27dc9435e30de4789856c3f7538a818cbdd2c54dd3371cc"
-changelog = "First release: `/e4mc start` opens the LAN and publishes an e4mc address; offline mode while hosting, so friends without an account can join; an Options > Mods row with its own settings page."
